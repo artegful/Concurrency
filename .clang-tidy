@@ -1,0 +1,10 @@
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  readability-*,
+  cppcoreguidelines-*,
+  -bugprone-exception-escape
+WarningsAsErrors: ''
+HeaderFilterRegex: '(?!_dep)'
+FormatStyle: file
