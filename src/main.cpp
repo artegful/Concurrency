@@ -59,6 +59,7 @@ void TestAsync()
 
 int main()
 {
+    std::cout << std::thread::hardware_concurrency() << std::endl;
     TestAsync();
 
     return 0;

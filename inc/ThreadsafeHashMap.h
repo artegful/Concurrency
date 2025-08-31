@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <list>
 #include <array>
+#include <mutex>
 #include <shared_mutex>
 #include <algorithm>
 
@@ -87,7 +88,8 @@ class HashMap
 {
 public:
     HashMap() = default;
-    HashMap(const Hash& hash) : hash(hash)
+    HashMap(Hash hash) : 
+        hash(std::move(hash))
     { }
 
     Value Get(const Key& key, const Value& defaultValue = Value()) const
