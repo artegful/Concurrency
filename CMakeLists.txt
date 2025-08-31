@@ -5,8 +5,37 @@ option(TEST_THREAD_SANITIZE "Add fsanitize=thread option" OFF)
 option(TEST_ADDRESS_SANITIZE "Add fsanitize=address option" OFF)
 option(TEST_TIDY "Enable clang tidy if possible" OFF)
 
+include(CheckCXXSourceCompiles)
+
+set(ATOMIC_TEST_CODE "
+#include <atomic>
+#include <cstdint>
+int main() 
+{
+    std::atomic<int> x;
+    x.store(0);
+    
+    struct DoubleMachineWordType { int* a; int* b; };
+    std::atomic<DoubleMachineWordType> y;
+    DoubleMachineWordType val{nullptr, nullptr};
+    y.store(val, std::memory_order_relaxed);
+    
+    return 0;
+}
+")
+
+check_cxx_source_compiles("${ATOMIC_TEST_CODE}" ATOMIC_BUILTIN)
+
 add_library(compile_flags_interface INTERFACE)
 target_compile_features(compile_flags_interface INTERFACE cxx_std_17)
+
+if (NOT ATOMIC_BUILTIN)
+    target_link_libraries(compile_flags_interface INTERFACE atomic)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(compile_flags_interface INTERFACE -mcx16)
+endif()
 
 if(TEST_THREAD_SANITIZE)
     target_compile_options(compile_flags_interface INTERFACE -fsanitize=thread)

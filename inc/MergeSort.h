@@ -149,7 +149,6 @@ void ParallelMergeSortInternalWithBufferCountThreads(Iter begin, Iter end, Comp 
     }
     else
     {
-        std::launch policy = threadsAvailable > 1 ? std::launch::async : std::launch::deferred;
         std::size_t leftAvailableThreads = threadsAvailable / 2;
         auto future = std::async(
             ParallelMergeSortInternalWithBufferCountThreads<Iter, Comp, BufferIt>, mid, end, 

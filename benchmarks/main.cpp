@@ -82,7 +82,6 @@ template<typename Queue>
 void PopFromQueue(Queue& queue, std::size_t amount)
 {
     std::size_t counter = 0;
-    int previous = -1;
 
     while (counter < amount)
     {
@@ -90,8 +89,6 @@ void PopFromQueue(Queue& queue, std::size_t amount)
 
         if (elementPtr)
         {
-            assert(*elementPtr > previous);
-            previous = *elementPtr;
             counter++;
         }
     }
@@ -104,7 +101,7 @@ void BM_Queue(benchmark::State& state)
     {
         Queue queue;
 
-        std::array<std::thread, 1> pushingThreads;
+        std::array<std::thread, 4> pushingThreads;
         for (std::size_t i = 0; i < pushingThreads.size(); i++)
         {
             pushingThreads[i] = std::thread(PushToQueue<Queue>, std::ref(queue), state.range(0) / pushingThreads.size());

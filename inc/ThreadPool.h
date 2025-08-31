@@ -97,7 +97,7 @@ private:
 template<typename Func>
 std::future<std::invoke_result_t<Func>> ThreadPool::Enqueue(Func task)
 {
-    using ReturnType = std::result_of_t<Func()>;
+    using ReturnType = std::invoke_result_t<Func>;
 
     // Easiest way to make packaged task copyable
     auto packagedTask = std::make_shared<std::packaged_task<ReturnType()>>(std::move(task));
