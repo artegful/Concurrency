@@ -1,23 +1,10 @@
+#pragma once
+
 #include <atomic>
 #include <type_traits>
 #include <memory>
 
-template<typename T>
-struct CountedPtr
-{
-    T* ptr = nullptr;
-    int count = 1;
-
-    T& operator*()
-    {
-        return *ptr;
-    }
-
-    T* operator->()
-    {
-        return ptr;
-    }
-};
+#include "CountedPtr.h"
 
 template<typename T>
 struct Node
@@ -55,7 +42,7 @@ public:
                 std::unique_ptr<T> result = std::move(old->data);
 
                 int difference = old.count - 2;
-                if (old->internalCount.fetch_add(diff, std::memory_order_release) == -diff)
+                if (old->internalCount.fetch_add(difference, std::memory_order_release) == -difference)
                 {
                     delete old.ptr;
                 }
@@ -75,6 +62,14 @@ public:
         }
     }
 
+    ~Stack()
+    {
+        while (head.ptr)
+        {
+            Pop();
+        }
+    }
+
 private:
     void IncreaseRefCount(CountedPtrElement& old)
     {
@@ -88,11 +83,6 @@ private:
         while (!head.compare_exchange_weak(old, newCountedPtr, std::memory_order_acquire, std::memory_order_relaxed));
 
         old.count = newCountedPtr.count;
-    }
-
-    void TryDelete(Node<T>* ptr)
-    {
-
     }
 
     std::atomic<CountedPtrElement> head;

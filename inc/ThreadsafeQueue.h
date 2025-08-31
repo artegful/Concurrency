@@ -3,88 +3,94 @@
 #include <memory>
 #include <mutex>
 
-template<typename T>
-struct Node
+namespace Threadsafe
 {
-    T data;
-    std::unique_ptr<Node<T>> next;
-};
-
-
-template<typename T>
-class Queue
-{
-public:
-    Queue()
+    template<typename T>
+    struct Node
     {
-        head = std::make_unique<Node<T>>();
-        tail = head.get();
-    }
+        std::unique_ptr<T> data;
+        std::unique_ptr<Node<T>> next;
+    };
 
-    bool TryPop(T& out)
+
+    template<typename T>
+    class Queue
     {
-        std::scoped_lock headLock(headMutex);
-
-        if (IsEmptyInternal())
+    public:
+        Queue()
         {
-            return false;
+            head = std::make_unique<Node<T>>();
+            tail = head.get();
         }
 
-        std::unique_ptr<Node<T>> oldHead = PopHead();
+        std::unique_ptr<T> Pop()
+        {
+            std::unique_ptr<Node<T>> oldHead;
 
-        out = std::move_if_noexcept(oldHead->data);
+            {
+                std::scoped_lock headLock(headMutex);
 
-        return true;
-    }
+                if (IsEmptyInternal())
+                {
+                    return {};
+                }
 
-    template<typename Param>
-    void Push(Param&& value)
-    {
-        std::unique_ptr<Node<T>> newNode = std::make_unique<Node<T>>();
+                oldHead = PopHead();
+            }
 
-        std::scoped_lock tailLock(tailMutex);
+            std::unique_ptr<T> data = std::move(oldHead->data);
+            return data;
+        }
 
-        tail->data = std::forward<Param>(value);
-        tail->next = std::move(newNode);
-        tail = tail->next.get();
-    }
+        template<typename Param>
+        void Push(Param&& value)
+        {
+            std::unique_ptr<Node<T>> newNode = std::make_unique<Node<T>>();
 
-    bool Empty() const
-    {
-        std::scoped_lock headLock(headMutex);
+            std::scoped_lock tailLock(tailMutex);
 
-        return IsEmptyInternal();
-    }
+            tail->data = std::make_unique<T>(std::forward<Param>(value));
+            tail->next = std::move(newNode);
+            tail = tail->next.get();
+        }
 
-    Queue(const Queue<T>&) = delete;
-    Queue(Queue<T>&&) = delete;
-    Queue& operator=(const Queue<T>&) = delete;
-    Queue& operator=(Queue<T>&&) = delete;
+        bool Empty() const
+        {
+            std::scoped_lock headLock(headMutex);
 
-private:
-    std::unique_ptr<Node<T>> PopHead()
-    {
-        std::unique_ptr<Node<T>> oldHead = std::move(head);
-        head = std::move(oldHead->next);
-        
-        return oldHead;
-    }
+            return IsEmptyInternal();
+        }
 
-    Node<T>* GetTail() const
-    {
-        std::scoped_lock tailLock(tailMutex);
+        Queue(const Queue<T>&) = delete;
+        Queue(Queue<T>&&) = delete;
+        Queue& operator=(const Queue<T>&) = delete;
+        Queue& operator=(Queue<T>&&) = delete;
 
-        return tail;
-    }
+    private:
+        std::unique_ptr<Node<T>> PopHead()
+        {
+            std::unique_ptr<Node<T>> oldHead = std::move(head);
+            head = std::move(oldHead->next);
+            
+            return oldHead;
+        }
 
-    bool IsEmptyInternal() const
-    {
-        return head.get() == GetTail();
-    }
+        Node<T>* GetTail() const
+        {
+            std::scoped_lock tailLock(tailMutex);
 
-    mutable std::mutex headMutex;
-    mutable std::mutex tailMutex;
+            return tail;
+        }
 
-    std::unique_ptr<Node<T>> head;
-    Node<T>* tail;
-};
+        bool IsEmptyInternal() const
+        {
+            return head.get() == GetTail();
+        }
+
+        mutable std::mutex headMutex;
+        mutable std::mutex tailMutex;
+
+        std::unique_ptr<Node<T>> head;
+        Node<T>* tail;
+    };
+}

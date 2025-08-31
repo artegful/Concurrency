@@ -3,61 +3,63 @@
 #include <vector>
 
 #include "ThreadsafeHashMap.h"
-#include "LockFreeStack.h"
+#include "LockFreeQueue.h"
+#include "ForEach.h"
+#include "ThreadPool.h"
 
-Stack<int> stack;
-std::vector<int> results;
-std::atomic<bool> start = false;
+std::atomic<int> counter;
+
+LockFree::Queue<int> queue;
+std::vector<int> res;
 
 void firstThread()
 {
-    while (!start.load(std::memory_order_relaxed))
+    for (int i = 0; i < 1'000'000; i++)
     {
+        queue.Push(i);
         std::this_thread::yield();
-    }
-
-    for (int i = 0; i < 1000; i++)
-    {
-        stack.Push(i);
     }
 }
 
 void secondThread()
 {
-    while (!start.load(std::memory_order_relaxed))
+    while (res.size() < 3'000'000)
     {
-        std::this_thread::yield();
-    }
-
-    for (int i = 0; i < 1000000; i++)
-    {
-        auto res = stack.Pop();
-
-        if (res)
+        std::unique_ptr<int> data = queue.Pop();
+        if (data)
         {
-            results.push_back(*res);
+            res.push_back(*data);
+        }
+
+        std::this_thread::yield();
+    } 
+}
+
+void TestAsync()
+{
+    std::vector<std::future<void>> futures;
+    for (int i = 0; i < 1000; i++)
+    {
+        futures.push_back(std::async([i]()
+        {
+            while (true)
+            {
+            }
+        }));
+        auto status = futures.back().wait_for(std::chrono::seconds(0));
+        if (status == std::future_status::deferred)
+        {
+            std::cout << "found deferred " << i + 1 << std::endl;
+            break;
         }
     }
+
+    std::cout << "no deferred" << std::endl;
 }
 
 int main()
 {
-    stack.Push(1);
-
-    std::thread thread1(firstThread);
-    std::thread thread2(secondThread);
-
-    start.store(true, std::memory_order_relaxed);
-
-    thread1.join();
-    thread2.join();
-
-    for (int num : results)
-    {
-        std::cout << num << ' ';
-    }
-
-    std::cout << '\n' << '\n' << results.size();
+    TestAsync();
 
     return 0;
 }

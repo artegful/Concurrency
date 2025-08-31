@@ -1,8 +1,21 @@
 cmake_minimum_required(VERSION 3.7)
 project(Test LANGUAGES CXX)
 
+option(TEST_THREAD_SANITIZE "Add fsanitize=thread option" OFF)
+option(TEST_ADDRESS_SANITIZE "Add fsanitize=address option" OFF)
+
 add_library(compile_flags_interface INTERFACE)
 target_compile_features(compile_flags_interface INTERFACE cxx_std_17)
+
+if(TEST_THREAD_SANITIZE)
+    target_compile_options(compile_flags_interface INTERFACE -fsanitize=thread)
+    target_link_options(compile_flags_interface INTERFACE -fsanitize=thread)
+endif()
+
+if(TEST_ADDRESS_SANITIZE)
+    target_compile_options(compile_flags_interface INTERFACE -fsanitize=address)
+    target_link_options(compile_flags_interface INTERFACE -fsanitize=address)
+endif()
 
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy" "clang-tidy.exe")
 
@@ -14,3 +27,4 @@ else()
 endif()
 
 add_subdirectory(src)
+add_subdirectory(benchmarks)
