@@ -4,7 +4,7 @@
 #include <future>
 #include <algorithm>
 
-static std::size_t GetOptimalAmountOfThreads(std::size_t amountOfElements)
+inline std::size_t GetOptimalAmountOfThreads(std::size_t amountOfElements)
 {
     constexpr std::size_t blockSize = 256u;
     std::size_t amountOfBlocks = (amountOfElements + blockSize - 1) / blockSize;

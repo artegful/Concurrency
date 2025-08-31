@@ -38,9 +38,9 @@ void secondThread()
 void TestAsync()
 {
     std::vector<std::future<void>> futures;
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 10000; i++)
     {
-        futures.push_back(std::async([i]()
+        futures.push_back(std::async([]()
         {
             while (true)
             {

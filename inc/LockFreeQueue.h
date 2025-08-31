@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <cassert>
 
 #include "CountedPtr.h"
 

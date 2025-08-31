@@ -74,7 +74,7 @@ public:
     explicit ThreadPool(std::size_t size);
     bool TryExecuteTask();
     template<typename Func>
-    std::future<std::result_of_t<Func()>> Enqueue(Func task);
+    std::future<std::invoke_result_t<Func>> Enqueue(Func task);
 
     bool PopFromThreadQueue(StoredFunc& func);
     bool PopFromGlobalQueue(StoredFunc& func);
@@ -95,7 +95,7 @@ private:
 };
 
 template<typename Func>
-std::future<std::result_of_t<Func()>> ThreadPool::Enqueue(Func task)
+std::future<std::invoke_result_t<Func>> ThreadPool::Enqueue(Func task)
 {
     using ReturnType = std::result_of_t<Func()>;
 
