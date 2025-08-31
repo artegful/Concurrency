@@ -4,7 +4,7 @@ template<typename T>
 struct CountedPtr
 {
     T* ptr = nullptr;
-    long long count = 1;
+    intptr_t count = 1;
 
     T& operator*()
     {
@@ -15,6 +15,4 @@ struct CountedPtr
     {
         return ptr;
     }
-
-    static_assert(sizeof(T*) == sizeof(long long));
 };
